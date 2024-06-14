@@ -1,0 +1,17 @@
+namespace: open-cluster-management
+
+resources:
+- resources/clusterrole.yaml
+- resources/controller.yaml
+- resources/clustermanagementaddon.yaml
+
+images:
+- name: example-addon-image
+  newName: quay.io/haoqing/resource-usage-collect-addon
+  newTag: latest
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+configMapGenerator:
+- literals:
+  - IMAGE_NAME=quay.io/haoqing/resource-usage-collect-addon:latest
+  name: image-config
