@@ -28,7 +28,7 @@ Build the docker image to run the sample AddOn.
 
 ```bash
 # build image
-export IMAGE_NAME=quay.io/haoqing/resource-usage-collect-addon:latest
+export IMAGE_NAME=zheshen/resource-usage-collect-addon:latest
 make images
 ```
 
@@ -64,7 +64,7 @@ cluster2    resource-usage-score   3m24s
 
 ### For example
 
-Select a cluster with more available CPU.
+Select a cluster with more available GPU.
 
 Bind the default ManagedClusterSet to default Namespace.
 ```bash
@@ -87,7 +87,7 @@ spec:
           type: AddOn
           addOn:
             resourceName: resource-usage-score
-            scoreName: cpuAvailable
+            scoreName: gpuAvailable
         weight: 1
 EOF
 ```

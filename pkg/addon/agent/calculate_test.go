@@ -21,9 +21,12 @@ func TestNormalizeValue(t *testing.T) {
 		memUsage       float64
 		gpuAlloc       float64
 		gpuUsage       float64
+		tpuAlloc       float64
+		tpuUsage       float64
 		expectCPUScore int64
 		expectMemScore int64
 		expectGPUScore int64
+		expectTPUScore int64
 	}{
 		{
 			name:           "usage < alloc",
@@ -33,9 +36,12 @@ func TestNormalizeValue(t *testing.T) {
 			memUsage:       1024 * 1024 * 1024 * 500,
 			gpuAlloc:       8,
 			gpuUsage:       4,
+			tpuAlloc:       5,
+			tpuUsage:       4,
 			expectCPUScore: -20,
 			expectMemScore: 2,
 			expectGPUScore: -60,
+			expectTPUScore: -90,
 		},
 		{
 			name:           "usage = alloc",
@@ -45,9 +51,12 @@ func TestNormalizeValue(t *testing.T) {
 			memUsage:       1024 * 1024 * 1024,
 			gpuAlloc:       8,
 			gpuUsage:       8,
+			tpuAlloc:       10,
+			tpuUsage:       10,
 			expectCPUScore: -100,
 			expectMemScore: -100,
 			expectGPUScore: -100,
+			expectTPUScore: -100,
 		},
 		{
 			name:           "usage > alloc",
@@ -57,20 +66,24 @@ func TestNormalizeValue(t *testing.T) {
 			memUsage:       1024 * 1024 * 1024 * 1025,
 			gpuAlloc:       8,
 			gpuUsage:       10,
+			tpuAlloc:       6,
+			tpuUsage:       12,
 			expectCPUScore: -100,
 			expectMemScore: -100,
 			expectGPUScore: -100,
+			expectTPUScore: -100,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			score := Score{}
-			cpuScore, memScore, gpuScore, err := score.normalizeScore(c.cpuAlloc, c.cpuUsage, c.memAlloc, c.memUsage, c.gpuAlloc, c.gpuUsage)
+			cpuScore, memScore, gpuScore, tpuScore, err := score.normalizeScore(c.cpuAlloc, c.cpuUsage, c.memAlloc, c.memUsage, c.gpuAlloc, c.gpuUsage, c.tpuAlloc, c.tpuUsage)
 			require.NoError(t, err)
 			assert.Equal(t, c.expectCPUScore, cpuScore)
 			assert.Equal(t, c.expectMemScore, memScore)
 			assert.Equal(t, c.expectGPUScore, gpuScore)
+			assert.Equal(t, c.expectTPUScore, tpuScore)
 		})
 	}
 }

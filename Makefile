@@ -20,7 +20,7 @@ PWD=$(shell pwd)
 # Image URL to use all building/pushing image targets;
 GO_BUILD_PACKAGES :=./pkg/...
 IMAGE ?= resource-usage-collect-addon
-IMAGE_REGISTRY ?= quay.io/haoqing
+IMAGE_REGISTRY ?= zheshen
 IMAGE_TAG ?= latest
 IMAGE_NAME ?= $(IMAGE_REGISTRY)/$(IMAGE):$(IMAGE_TAG)
 

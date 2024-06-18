@@ -14,11 +14,17 @@ import (
 const MAXSCORE = float64(100)
 const MINSCORE = float64(-100)
 
-// MAXCPUCOUNT Constants for resource counts
+// MAXCPUCOUNT Constants for CPU resource counts
 const MAXCPUCOUNT = float64(100)
 const MINCPUCOUNT = float64(0)
+
+// MAXGPUCOUNT Constants for GPU resource counts
 const MAXGPUCOUNT = float64(20) // Assume that one cluster can have maximum 10 GPUs, can be modified.
 const MINGPUCOUNT = float64(0)
+
+// MAXTPUCOUNT Constants for TPU resource counts
+const MAXTPUCOUNT = float64(20) // Assume that one cluster can have maximum 10 GPUs, can be modified.
+const MINTPUCOUNT = float64(0)
 
 // MAXMEMCOUNT Constants for memory
 const MAXMEMCOUNT = float64(1024 * 1024)
@@ -26,6 +32,7 @@ const MINMEMCOUNT = float64(0)
 
 // ResourceGPU Custom resource names
 const ResourceGPU = "nvidia.com/gpu"
+const ResourceTPU = "google.com/tpu"
 
 type Score struct {
 	nodeLister        corev1lister.NodeLister
@@ -43,38 +50,46 @@ func NewScore(nodeInformer corev1informers.NodeInformer, podInformer corev1infor
 	}
 }
 
-func (s *Score) calculateScore() (cpuScore int64, memScore int64, gpuScore int64, err error) {
+func (s *Score) calculateScore() (cpuScore int64, memScore int64, gpuScore int64, tpuScore int64, err error) {
 	cpuAlloc, err := s.calculateClusterAllocatable(string(clusterv1.ResourceCPU))
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, err
 	}
 	memAlloc, err := s.calculateClusterAllocatable(string(clusterv1.ResourceMemory))
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, err
 	}
 	gpuAlloc, err := s.calculateClusterAllocatable(ResourceGPU)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, err
+	}
+	tpuAlloc, err := s.calculateClusterAllocatable(ResourceTPU)
+	if err != nil {
+		return 0, 0, 0, 0, err
 	}
 
 	cpuUsage, err := s.calculatePodResourceRequest(string(v1.ResourceCPU))
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, err
 	}
 	memUsage, err := s.calculatePodResourceRequest(string(v1.ResourceMemory))
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, err
 	}
 	gpuUsage, err := s.calculatePodResourceRequest(ResourceGPU)
 	if err != nil {
-		return 0, 0, 0, err
+		return 0, 0, 0, 0, err
+	}
+	tpuUsage, err := s.calculatePodResourceRequest(ResourceTPU)
+	if err != nil {
+		return 0, 0, 0, 0, err
 	}
 
-	return s.normalizeScore(cpuAlloc, cpuUsage, memAlloc, memUsage, gpuAlloc, gpuUsage)
+	return s.normalizeScore(cpuAlloc, cpuUsage, memAlloc, memUsage, gpuAlloc, gpuUsage, tpuAlloc, tpuUsage)
 }
 
-func (s *Score) normalizeScore(cpuAlloc, cpuUsage, memAlloc, memUsage, gpuAlloc, gpuUsage float64) (cpuScore int64, memScore int64, gpuScore int64, err error) {
-	klog.Infof("cpuAlloc = %v, cpuUsage = %v, memAlloc = %v, memUsage = %v, gpuAlloc = %v, gpuUsage = %v", cpuAlloc, cpuUsage, memAlloc, memUsage, gpuAlloc, gpuUsage)
+func (s *Score) normalizeScore(cpuAlloc, cpuUsage, memAlloc, memUsage, gpuAlloc, gpuUsage, tpuAlloc, tpuUsage float64) (cpuScore int64, memScore int64, gpuScore int64, tpuScore int64, err error) {
+	klog.Infof("cpuAlloc = %v, cpuUsage = %v, memAlloc = %v, memUsage = %v, gpuAlloc = %v, gpuUsage = %v, tpuAlloc = %v, tpuUsage = %v", cpuAlloc, cpuUsage, memAlloc, memUsage, gpuAlloc, gpuUsage, tpuAlloc, tpuUsage)
 	availableCpu := cpuAlloc - cpuUsage
 	if availableCpu > MAXCPUCOUNT {
 		cpuScore = int64(MAXSCORE)
@@ -102,8 +117,17 @@ func (s *Score) normalizeScore(cpuAlloc, cpuUsage, memAlloc, memUsage, gpuAlloc,
 		gpuScore = int64(200*availableGpu/MAXGPUCOUNT - 100)
 	}
 
-	klog.Infof("cpuScore = %v, memScore = %v, gpuScore = %v", cpuScore, memScore, gpuScore)
-	return cpuScore, memScore, gpuScore, nil
+	availableTpu := tpuAlloc - tpuUsage
+	if availableTpu > MAXTPUCOUNT {
+		tpuScore = int64(MAXSCORE)
+	} else if availableTpu <= MINTPUCOUNT {
+		tpuScore = int64(MINSCORE)
+	} else {
+		tpuScore = int64(200*availableTpu/MAXTPUCOUNT - 100)
+	}
+
+	klog.Infof("cpuScore = %v, memScore = %v, gpuScore = %v, tpuScore = %v", cpuScore, memScore, gpuScore, tpuScore)
+	return cpuScore, memScore, gpuScore, tpuScore, nil
 }
 
 func (s *Score) calculateClusterAllocatable(resourceName string) (float64, error) {

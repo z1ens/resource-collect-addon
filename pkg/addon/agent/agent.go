@@ -49,7 +49,7 @@ type AgentOptions struct {
 	AddonNamespace    string
 }
 
-// NewWorkloadAgentOptions returns the flags with default value set
+// NewAgentOptions NewWorkloadAgentOptions returns the flags with default value set
 func NewAgentOptions(addonName string) *AgentOptions {
 	return &AgentOptions{AddonName: addonName}
 }
@@ -159,7 +159,7 @@ func newAgentController(
 
 func (c *agentController) sync(ctx context.Context, syncCtx factory.SyncContext) error {
 	score := NewScore(c.nodeInformer, c.podInformer)
-	cpuScore, memScore, gpuScore, err := score.calculateScore()
+	cpuScore, memScore, gpuScore, tpuScore, err := score.calculateScore()
 	if err != nil {
 		return err
 	}
@@ -175,6 +175,10 @@ func (c *agentController) sync(ctx context.Context, syncCtx factory.SyncContext)
 		{
 			Name:  "gpuAvailable",
 			Value: int32(gpuScore),
+		},
+		{
+			Name:  "tpuAvailable",
+			Value: int32(tpuScore),
 		},
 	}
 
