@@ -154,7 +154,7 @@ func newAgentController(
 			return key
 		}, addOnPlacementScoreInformer.Informer()).
 		WithBareInformers(podInformer.Informer(), nodeInformer.Informer()).
-		WithSync(c.sync).ResyncEvery(time.Second*60).ToController("score-agent-controller", recorder)
+		WithSync(c.sync).ResyncEvery(time.Second*30).ToController("score-agent-controller", recorder)
 }
 
 func (c *agentController) sync(ctx context.Context, syncCtx factory.SyncContext) error {

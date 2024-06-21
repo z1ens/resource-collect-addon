@@ -11,7 +11,3 @@ images:
   newTag: latest
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-configMapGenerator:
-- literals:
-  - IMAGE_NAME=zheshen/resource-usage-collect-addon:latest
-  name: image-config
