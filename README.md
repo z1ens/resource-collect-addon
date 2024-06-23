@@ -76,7 +76,7 @@ cat <<EOF | kubectl apply -f -
 apiVersion: cluster.open-cluster-management.io/v1beta1
 kind: Placement
 metadata:
-  name: placement
+  name: placement1
   namespace: default
 spec:
   numberOfClusters: 1
